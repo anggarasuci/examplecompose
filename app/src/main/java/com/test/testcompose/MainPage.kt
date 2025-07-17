@@ -5,11 +5,15 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import com.test.testcompose.repository.PokemonRepository
 import com.test.testcompose.ui.screen.detail.DetailScreen
 import com.test.testcompose.ui.screen.detail.DetailViewModel
 import com.test.testcompose.ui.screen.landing.LandingScreen
 import com.test.testcompose.ui.screen.landing.LandingViewModel
+import com.test.testcompose.ui.screen.login.LoginScreen
+import com.test.testcompose.ui.screen.login.LoginViewModel
+import kotlinx.coroutines.launch
 
 sealed class Page {
     object Landing : Page()
@@ -20,7 +24,7 @@ sealed class Page {
 
 @Composable
 fun MainPage() {
-    val (currentPage, setCurrentPage) = remember { mutableStateOf<Page>(Page.Landing) }
+    val (currentPage, setCurrentPage) = remember { mutableStateOf<Page>(Page.Login) }
     val landingViewModel = remember {
         LandingViewModel(
             PokemonRepository()
@@ -40,7 +44,7 @@ fun MainPage() {
             onBack = { setCurrentPage(Page.Landing) })
 
         is Page.Form -> FormPage(onBack = { setCurrentPage(Page.Landing) })
-        is Page.Login -> LoginPage(onBack = { setCurrentPage(Page.Landing) })
+        is Page.Login -> LoginPage(onNavigate = { setCurrentPage(Page.Landing) })
     }
 }
 
@@ -81,6 +85,19 @@ fun FormPage(onBack: () -> Unit) {
 }
 
 @Composable
-fun LoginPage(onBack: () -> Unit) {
-    // TODO: Implement login UI
+fun LoginPage(onNavigate: () -> Unit) {
+    val viewModel = remember {
+        LoginViewModel()
+    }
+    val state = viewModel.state
+    val coroutineScope = rememberCoroutineScope()
+    LoginScreen(
+        state = state,
+        onEvent = { event ->
+            coroutineScope.launch {
+                viewModel.onEvent(event)
+            }
+        },
+        onNavigate = { onNavigate() }
+    )
 }
