@@ -1,7 +1,17 @@
 package com.test.testcompose
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -13,6 +23,7 @@ import com.test.testcompose.ui.screen.landing.LandingScreen
 import com.test.testcompose.ui.screen.landing.LandingViewModel
 import com.test.testcompose.ui.screen.login.LoginScreen
 import com.test.testcompose.ui.screen.login.LoginViewModel
+import com.test.testcompose.ui.screen.profile.ProfileScreen
 import kotlinx.coroutines.launch
 
 sealed class Page {
@@ -20,7 +31,10 @@ sealed class Page {
     data class Detail(val name: String) : Page()
     object Form : Page()
     object Login : Page()
+    object Profile : Page()
+    object Favourite : Page()
 }
+
 
 @Composable
 fun MainPage() {
@@ -31,31 +45,74 @@ fun MainPage() {
         )
     }
     val lazyGridState = rememberLazyGridState()
-    when (val page = currentPage) {
-        is Page.Landing -> LandingPage(
-            lazyGridState = lazyGridState,
-            viewModel = landingViewModel,
-            onNavigate = { id ->
-                setCurrentPage(Page.Detail(id))
-            })
 
-        is Page.Detail -> DetailPage(
-            name = page.name,
-            onBack = { setCurrentPage(Page.Landing) })
+    Scaffold(
+        bottomBar = {
+            if (currentPage is Page.Landing || currentPage is Page.Profile || currentPage is Page.Favourite) {
+                BottomNavigationBar(currentPage = currentPage, onPageSelected = setCurrentPage)
+            }
+        }
+    ) { paddingValues ->
+        when (val page = currentPage) {
+            is Page.Landing -> LandingPage(
+                paddingValues = paddingValues,
+                lazyGridState = lazyGridState,
+                viewModel = landingViewModel,
+                onNavigate = { id ->
+                    setCurrentPage(Page.Detail(id))
+                })
 
-        is Page.Form -> FormPage(onBack = { setCurrentPage(Page.Landing) })
-        is Page.Login -> LoginPage(onNavigate = { setCurrentPage(Page.Landing) })
+            is Page.Detail -> DetailPage(
+                name = page.name,
+                onBack = { setCurrentPage(Page.Landing) })
+
+            is Page.Form -> FormPage(onBack = { setCurrentPage(Page.Landing) })
+            is Page.Login -> LoginPage(onNavigate = { setCurrentPage(Page.Landing) })
+            is Page.Profile -> ProfileScreen(
+                paddingValues = paddingValues,
+                onNavigate = { setCurrentPage(Page.Login) })
+
+            is Page.Favourite -> {
+                //TODO: Implement Favourite Page
+            }
+        }
+    }
+}
+
+@Composable
+fun BottomNavigationBar(currentPage: Page, onPageSelected: (Page) -> Unit) {
+    NavigationBar {
+        NavigationBarItem(
+            icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
+            label = { Text("Home") },
+            selected = currentPage is Page.Landing,
+            onClick = { onPageSelected(Page.Landing) }
+        )
+        NavigationBarItem(
+            icon = { Icon(Icons.Filled.Favorite, contentDescription = "Favourite") },
+            label = { Text("Favourite") },
+            selected = currentPage is Page.Favourite,
+            onClick = { onPageSelected(Page.Favourite) }
+        )
+        NavigationBarItem(
+            icon = { Icon(Icons.Filled.Person, contentDescription = "Profile") },
+            label = { Text("User") },
+            selected = currentPage is Page.Profile,
+            onClick = { onPageSelected(Page.Profile) }
+        )
     }
 }
 
 @Composable
 fun LandingPage(
+    paddingValues: PaddingValues,
     lazyGridState: LazyGridState,
     viewModel: LandingViewModel,
     onNavigate: (id: String) -> Unit
 ) {
     val state = viewModel.state
     LandingScreen(
+        paddingValues = paddingValues,
         lazyGridState = lazyGridState,
         state = state,
         onEvent = viewModel::onEvent,

@@ -36,6 +36,7 @@ import com.test.testcompose.util.buildJsonFromPokemonItems
 @SuppressLint("UnrememberedMutableState")
 @Composable
 fun LandingScreen(
+    paddingValues: PaddingValues,
     lazyGridState: LazyGridState,
     state: LandingState,
     onEvent: (LandingEvent) -> Unit,
@@ -66,11 +67,11 @@ fun LandingScreen(
         }
     }
 
-    Scaffold { padding ->
+    Scaffold { _ ->
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
+                .padding(paddingValues)
         ) {
 
             LazyVerticalGrid(
