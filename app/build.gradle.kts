@@ -17,6 +17,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "BASE_URL", "\"https://pokeapi.co/api/v2/\"")
+        buildConfigField("String", "USER_BASE_URL", "\"https://dummyjson.com/\"")
     }
 
     buildTypes {

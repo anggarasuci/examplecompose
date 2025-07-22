@@ -30,6 +30,12 @@ fun LoginScreen(
             .padding(24.dp),
         verticalArrangement = Arrangement.Center
     ) {
+        Text(
+            text = "Login",
+            style = MaterialTheme.typography.headlineLarge,
+            modifier = Modifier.padding(bottom = 24.dp)
+        )
+
         InputTextWithError(
             value = state.formData.username.value,
             onValueChange = { value -> onEvent(LoginEvent.UsernameChanged(value)) },

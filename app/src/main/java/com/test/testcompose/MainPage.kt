@@ -1,8 +1,10 @@
 package com.test.testcompose
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
@@ -17,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import com.test.testcompose.repository.PokemonRepository
+import com.test.testcompose.repository.UserRepository
 import com.test.testcompose.ui.screen.detail.DetailScreen
 import com.test.testcompose.ui.screen.detail.DetailViewModel
 import com.test.testcompose.ui.screen.landing.LandingScreen
@@ -24,6 +27,10 @@ import com.test.testcompose.ui.screen.landing.LandingViewModel
 import com.test.testcompose.ui.screen.login.LoginScreen
 import com.test.testcompose.ui.screen.login.LoginViewModel
 import com.test.testcompose.ui.screen.profile.ProfileScreen
+import com.test.testcompose.ui.screen.user.detail.USerDetailViewModel
+import com.test.testcompose.ui.screen.user.detail.UserDetailScreen
+import com.test.testcompose.ui.screen.user.landing.UserLandingScreen
+import com.test.testcompose.ui.screen.user.landing.UserLandingViewModel
 import kotlinx.coroutines.launch
 
 sealed class Page {
@@ -33,6 +40,8 @@ sealed class Page {
     object Login : Page()
     object Profile : Page()
     object Favourite : Page()
+    object UserLanding : Page()
+    data class UserDetail(val id: Int) : Page()
 }
 
 
@@ -45,6 +54,13 @@ fun MainPage() {
         )
     }
     val lazyGridState = rememberLazyGridState()
+
+    val userLandingViewModel = remember {
+        UserLandingViewModel(
+            UserRepository()
+        )
+    }
+    val lazyListState = rememberLazyListState()
 
     Scaffold(
         bottomBar = {
@@ -67,7 +83,7 @@ fun MainPage() {
                 onBack = { setCurrentPage(Page.Landing) })
 
             is Page.Form -> FormPage(onBack = { setCurrentPage(Page.Landing) })
-            is Page.Login -> LoginPage(onNavigate = { setCurrentPage(Page.Landing) })
+            is Page.Login -> LoginPage(onNavigate = { setCurrentPage(Page.UserLanding) })
             is Page.Profile -> ProfileScreen(
                 paddingValues = paddingValues,
                 onNavigate = { setCurrentPage(Page.Login) })
@@ -75,6 +91,21 @@ fun MainPage() {
             is Page.Favourite -> {
                 //TODO: Implement Favourite Page
             }
+
+            Page.UserLanding -> {
+                UserLandingPage(
+                    paddingValues = paddingValues,
+                    lazyListState = lazyListState,
+                    viewModel = userLandingViewModel,
+                    onNavigate = { id ->
+                        setCurrentPage(Page.UserDetail(id))
+                    }
+                )
+            }
+
+            is Page.UserDetail -> UserDetailPage(
+                id = page.id,
+                onBack = { setCurrentPage(Page.UserLanding) })
         }
     }
 }
@@ -117,6 +148,39 @@ fun LandingPage(
         state = state,
         onEvent = viewModel::onEvent,
         onNavigate = { id -> onNavigate(id) }
+    )
+}
+
+@Composable
+fun UserLandingPage(
+    paddingValues: PaddingValues,
+    lazyListState: LazyListState,
+    viewModel: UserLandingViewModel,
+    onNavigate: (id: Int) -> Unit
+) {
+    val state = viewModel.state
+    UserLandingScreen(
+        paddingValues = paddingValues,
+        lazyListState = lazyListState,
+        state = state,
+        onEvent = viewModel::onEvent,
+        onNavigate = { id -> onNavigate(id) }
+    )
+}
+
+@Composable
+fun UserDetailPage(id: Int, onBack: () -> Unit) {
+    val viewModel = remember {
+        USerDetailViewModel(
+            UserRepository()
+        )
+    }
+    val state = viewModel.state
+    UserDetailScreen(
+        id = id,
+        state = state,
+        onEvent = viewModel::onEvent,
+        onBack = { onBack() }
     )
 }
 
