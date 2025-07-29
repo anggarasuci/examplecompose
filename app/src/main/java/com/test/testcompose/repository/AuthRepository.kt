@@ -81,4 +81,5 @@ class AuthRepository(private val context: Context) {
 
     fun clearTokens() = tokenManager.clear()
     fun getJwt(): String? = tokenManager.getJwt()
+    fun getRefreshToken(): String? = tokenManager.getRefresh()
 }

@@ -54,6 +54,19 @@ class LoginViewModel(
         state = state.copy(isLoadingAuth = true)
         delay(1000)
         val isAuthenticated = repository.checkAuth()
+
+        if (!isAuthenticated && repository.getRefreshToken()?.isBlank() == false) {
+            val isTokenRefreshed = repository.refreshToken()
+            if (!isTokenRefreshed) {
+                state = state.copy(
+                    isAuthenticated = false,
+                    isLoadingAuth = false,
+                    errorMessage = "Authentication failed, please login again."
+                )
+                return@launch
+            }
+        }
+
         state = state.copy(
             isAuthenticated = isAuthenticated && repository.getJwt()?.isBlank() == false,
             isLoadingAuth = isAuthenticated
