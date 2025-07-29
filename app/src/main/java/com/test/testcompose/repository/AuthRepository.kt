@@ -65,7 +65,7 @@ class AuthRepository(private val context: Context) {
             if (conn.responseCode == 200) {
                 val response = conn.inputStream.bufferedReader().readText()
                 val json = JSONObject(response)
-                val jwt = json.getString("token")
+                val jwt = json.getString("accessToken")
                 val newRefresh = json.getString("refreshToken")
                 tokenManager.saveToken(jwt, newRefresh)
                 true

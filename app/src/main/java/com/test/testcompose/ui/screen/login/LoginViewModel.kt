@@ -31,10 +31,16 @@ class LoginViewModel(
             }
 
             is LoginEvent.UsernameChanged -> {
+                var a = event.value
+                when {
+                    event.value.length == 2 -> {
+                        a = event.value + "/"
+                    }
+                }
                 state = state.copy(
                     formData = state.formData.copy(
                         username = state.formData.username.copy(
-                            value = event.value,
+                            value = a,
                             errorMessage = "",
                             isError = false
                         )

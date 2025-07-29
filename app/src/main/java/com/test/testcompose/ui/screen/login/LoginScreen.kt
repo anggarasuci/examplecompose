@@ -17,6 +17,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.test.testcompose.ui.component.DatePicker
 import com.test.testcompose.ui.component.InputTextWithError
 
 @Composable
@@ -78,6 +79,8 @@ fun LoginScreen(
                 errorMessage = state.formData.password.errorMessage,
                 isPassword = true
             )
+            Spacer(modifier = Modifier.height(24.dp))
+            DatePicker()
 
             Spacer(modifier = Modifier.height(24.dp))
 
