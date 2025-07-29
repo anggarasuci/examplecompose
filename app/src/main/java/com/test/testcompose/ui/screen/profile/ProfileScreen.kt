@@ -36,7 +36,7 @@ fun ProfileScreen(
                 .fillMaxWidth()
                 .clickable { onNavigate() }
                 .padding(16.dp),
-            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ExitToApp,

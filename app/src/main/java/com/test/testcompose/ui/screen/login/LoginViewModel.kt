@@ -4,16 +4,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.test.testcompose.repository.AuthRepository
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
-class LoginViewModel() : ViewModel() {
-    private val _mockUsername = "testuser"
-    private val _mockPassword = "password123"
+class LoginViewModel(
+    private val repository: AuthRepository
+) : ViewModel() {
 
     var state by mutableStateOf(LoginState())
         private set
 
-    suspend fun onEvent(event: LoginEvent) {
+    fun onEvent(event: LoginEvent) {
         when (event) {
             is LoginEvent.PasswordChanged -> {
                 state = state.copy(
@@ -42,11 +45,24 @@ class LoginViewModel() : ViewModel() {
             is LoginEvent.LoginButtonClicked -> {
                 handleOnLogin(event.onSuccessLogin)
             }
+
+            LoginEvent.OnInit -> handleOnInit()
         }
     }
 
-    private suspend fun handleOnLogin(onSuccessLogin: () -> Unit) {
-        state = state.copy(isLoading = true, errorMessage = null)
+    private fun handleOnInit() = viewModelScope.launch {
+        state = state.copy(isLoadingAuth = true)
+        delay(1000)
+        val isAuthenticated = repository.checkAuth()
+        state = state.copy(
+            isAuthenticated = isAuthenticated && repository.getJwt()?.isBlank() == false,
+            isLoadingAuth = isAuthenticated
+        )
+    }
+
+
+    private fun handleOnLogin(onSuccessLogin: () -> Unit) = viewModelScope.launch {
+        state = state.copy(isLoading = true, errorMessage = null, isAuthenticated = false)
         delay(1000)
 
         val usernameValue = state.formData.username.value
@@ -80,17 +96,27 @@ class LoginViewModel() : ViewModel() {
 
         if (isUsernameEmpty || isPasswordEmpty) {
             state = state.copy(isLoading = false)
-            return
+            return@launch
         }
 
-        if (usernameValue != _mockUsername || passwordValue != _mockPassword) {
-            state = state.copy(
-                isLoading = false,
-                errorMessage = "Invalid username or password"
-            )
-            return
-        }
-
-        onSuccessLogin()
+        repository.login(
+            username = usernameValue,
+            password = passwordValue
+        ).fold(
+            onSuccess = {
+                state = state.copy(
+                    isLoading = false,
+                    errorMessage = null,
+                    isAuthenticated = true
+                )
+                onSuccessLogin()
+            },
+            onFailure = { exception ->
+                state = state.copy(
+                    isLoading = false,
+                    errorMessage = exception.message ?: "Login failed"
+                )
+            }
+        )
     }
 }

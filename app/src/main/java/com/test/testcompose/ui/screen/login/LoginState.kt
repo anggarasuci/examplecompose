@@ -6,4 +6,6 @@ data class LoginState(
     val isLoading: Boolean = false,
     val formData: LoginInputModel = LoginInputModel(),
     val errorMessage: String? = null,
+    val isAuthenticated: Boolean = false,
+    val isLoadingAuth: Boolean = true
 )

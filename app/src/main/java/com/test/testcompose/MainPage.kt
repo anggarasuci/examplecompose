@@ -18,6 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import com.test.testcompose.repository.AuthRepository
 import com.test.testcompose.repository.PokemonRepository
 import com.test.testcompose.repository.UserRepository
 import com.test.testcompose.ui.screen.detail.DetailScreen
@@ -48,6 +50,11 @@ sealed class Page {
 @Composable
 fun MainPage() {
     val (currentPage, setCurrentPage) = remember { mutableStateOf<Page>(Page.Login) }
+
+    val context = LocalContext.current
+    val authRepository = remember {
+        AuthRepository(context = context)
+    }
     val landingViewModel = remember {
         LandingViewModel(
             PokemonRepository()
@@ -62,9 +69,10 @@ fun MainPage() {
     }
     val lazyListState = rememberLazyListState()
 
+
     Scaffold(
         bottomBar = {
-            if (currentPage is Page.Landing || currentPage is Page.Profile || currentPage is Page.Favourite) {
+            if (currentPage is Page.UserLanding || currentPage is Page.Landing || currentPage is Page.Profile || currentPage is Page.Favourite) {
                 BottomNavigationBar(currentPage = currentPage, onPageSelected = setCurrentPage)
             }
         }
@@ -83,10 +91,17 @@ fun MainPage() {
                 onBack = { setCurrentPage(Page.Landing) })
 
             is Page.Form -> FormPage(onBack = { setCurrentPage(Page.Landing) })
-            is Page.Login -> LoginPage(onNavigate = { setCurrentPage(Page.UserLanding) })
-            is Page.Profile -> ProfileScreen(
-                paddingValues = paddingValues,
-                onNavigate = { setCurrentPage(Page.Login) })
+            Page.Login -> LoginPage(
+                authRepository = authRepository,
+                onNavigate = { setCurrentPage(Page.UserLanding) })
+
+            is Page.Profile ->
+                ProfileScreen(
+                    paddingValues = paddingValues,
+                    onNavigate = {
+                        authRepository.clearTokens()
+                        setCurrentPage(Page.Login)
+                    })
 
             is Page.Favourite -> {
                 //TODO: Implement Favourite Page
@@ -116,14 +131,14 @@ fun BottomNavigationBar(currentPage: Page, onPageSelected: (Page) -> Unit) {
         NavigationBarItem(
             icon = { Icon(Icons.Filled.Home, contentDescription = "Home") },
             label = { Text("Home") },
-            selected = currentPage is Page.Landing,
-            onClick = { onPageSelected(Page.Landing) }
+            selected = currentPage is Page.UserLanding,
+            onClick = { onPageSelected(Page.UserLanding) }
         )
         NavigationBarItem(
-            icon = { Icon(Icons.Filled.Favorite, contentDescription = "Favourite") },
-            label = { Text("Favourite") },
-            selected = currentPage is Page.Favourite,
-            onClick = { onPageSelected(Page.Favourite) }
+            icon = { Icon(Icons.Filled.Favorite, contentDescription = "Pokemon") },
+            label = { Text("Pokemon") },
+            selected = currentPage is Page.Landing,
+            onClick = { onPageSelected(Page.Landing) }
         )
         NavigationBarItem(
             icon = { Icon(Icons.Filled.Person, contentDescription = "Profile") },
@@ -206,9 +221,9 @@ fun FormPage(onBack: () -> Unit) {
 }
 
 @Composable
-fun LoginPage(onNavigate: () -> Unit) {
+fun LoginPage(authRepository: AuthRepository, onNavigate: () -> Unit) {
     val viewModel = remember {
-        LoginViewModel()
+        LoginViewModel(authRepository)
     }
     val state = viewModel.state
     val coroutineScope = rememberCoroutineScope()
